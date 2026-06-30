@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Life Wheel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --radius: 22px;
+    --card-bg: #ffffff;
+    --bg-soft: #faf9fc;
+    --ink: #2e2a3a;
+    --ink-soft: #8a8499;
+    --line: #ece9f3;
+    --accent: #b9a6f0;
+    --accent-strong: #9b82e8;
+    --shadow: 0 20px 50px -20px rgba(80, 60, 130, 0.25), 0 4px 12px -4px rgba(80,60,130,0.12);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--ink);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 14px;
+    min-height: 100vh;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 640px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px 28px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(185,166,240,0.18), rgba(185,166,240,0) 70%);
+    pointer-events: none;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+  }
+
+  h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.2px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 2px 0 18px;
+  }
+
+  .reset-btn {
+    border: none;
+    background: var(--bg-soft);
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 13px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+  }
+  .reset-btn:hover {
+    background: #f1ecfc;
+    color: var(--accent-strong);
+    transform: translateY(-1px);
+  }
+  .reset-btn:active { transform: translateY(0); }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    margin: 4px auto 10px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px 40px;
+    color: var(--ink-soft);
+  }
+  .empty-state .emoji { font-size: 34px; margin-bottom: 10px; }
+  .empty-state p { margin: 0 0 16px; font-size: 14px; }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 12px 1fr 64px 30px;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 10px;
+    border-radius: 13px;
+    transition: background 0.18s ease, transform 0.18s ease, opacity 0.25s ease, max-height 0.25s ease;
+    animation: rowIn 0.28s ease;
+  }
+  .row:hover { background: var(--bg-soft); }
+
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .row.removing {
+    opacity: 0;
+    transform: translateX(12px) scale(0.96);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 4px var(--dot-ring, transparent);
+  }
+
+  .name-input {
+    border: none;
+    background: transparent;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--ink);
+    padding: 6px 8px;
+    border-radius: 8px;
+    width: 100%;
+    font-family: inherit;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .name-input:hover { background: #f4f2fa; }
+  .name-input:focus {
+    outline: none;
+    background: #fff;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .num-input {
+    width: 64px;
+    border: 1.5px solid var(--line);
+    background: var(--bg-soft);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 7px 4px;
+    font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    -moz-appearance: textfield;
+  }
+  .num-input::-webkit-outer-spin-button,
+  .num-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .num-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(185,166,240,0.25);
+  }
+
+  .del-btn {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .del-btn:hover {
+    background: #fdeaea;
+    color: #d97a7a;
+  }
+
+  .add-row {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .add-btn {
+    border: 1.5px dashed #d8cdf5;
+    background: #faf8ff;
+    color: var(--accent-strong);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 10px 18px;
+    border-radius: 14px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.18s ease;
+    font-family: inherit;
+  }
+  .add-btn:hover {
+    background: #f1ecfc;
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .add-btn:active { transform: translateY(0); }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11px;
+    color: #bdb6cc;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 420px) {
+    .card { padding: 20px 16px 18px; border-radius: 18px; }
+    .row { grid-template-columns: 10px 1fr 56px 26px; gap: 8px; padding: 8px; }
+    .name-input { font-size: 13.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <header>
+    <div>
+      <h1>🌸 Life Wheel</h1>
+    </div>
+    <button class="reset-btn" id="resetBtn">Reset to defaults</button>
+  </header>
+  <p class="subtitle">Rate each area of your life from 0–10</p>
+
+  <div class="chart-wrap" id="chartWrap">
+    <canvas id="wheelChart"></canvas>
+  </div>
+
+  <div id="emptyState" class="empty-state" style="display:none;">
+    <div class="emoji">🌱</div>
+    <p>No categories yet. Add one to begin reflecting.</p>
+  </div>
+
+  <div class="rows" id="rows"></div>
+
+  <div class="add-row">
+    <button class="add-btn" id="addBtn">+ Add category</button>
+  </div>
+
+  <div class="footer-note">Saved automatically to this browser</div>
+</div>
+
+<script>
+(function(){
+  const PASTELS = [
+    '#A8D8EA', '#FFD3B0', '#C9E4C5', '#F6C9D6', '#D8C9F0',
+    '#FFE5A8', '#B8E0D2', '#F4C7C3', '#C3D9F0', '#E0C9E8'
+  ];
+
+  const DEFAULTS = [
+    { name: 'Health', value: 5 },
+    { name: 'Career', value: 5 },
+    { name: 'Relationships', value: 5 },
+    { name: 'Finances', value: 5 },
+    { name: 'Personal Growth', value: 5 },
+    { name: 'Fun & Recreation', value: 5 }
+  ];
+
+  const STORAGE_KEY = 'lifeWheelState_v1';
+  let categories = [];
+  let chart = null;
+  let idCounter = 0;
+
+  function uid(){ return 'c' + (idCounter++) + '_' + Math.random().toString(36).slice(2,7); }
+
+  function load(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length >= 0) {
+          categories = parsed.map(c => ({ id: c.id || uid(), name: c.name, value: clamp(c.value) }));
+          return;
+        }
+      }
+    } catch(e) {}
+    categories = DEFAULTS.map(d => ({ id: uid(), name: d.name, value: d.value }));
+  }
+
+  function save(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(categories)); } catch(e) {}
+  }
+
+  function clamp(v){
+    v = Number(v);
+    if (isNaN(v)) v = 0;
+    return Math.min(10, Math.max(0, v));
+  }
+
+  function colorFor(index){ return PASTELS[index % PASTELS.length]; }
+
+  function hexToRgba(hex, alpha){
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  function buildChart(){
+    const ctx = document.getElementById('wheelChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: categories.map(c => c.name || ' '),
+        datasets: [{
+          data: categories.map(c => c.value),
+          backgroundColor: hexToRgba('#C9C2EE', 0.35),
+          borderColor: '#B6A6E8',
+          borderWidth: 2.5,
+          pointBackgroundColor: categories.map((c,i) => colorFor(i)),
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          fill: true,
+          tension: 0.15
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: { duration: 450, easing: 'easeOutQuart' },
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+        scales: {
+          r: {
+            min: 0,
+            max: 10,
+            ticks: {
+              display: true,
+              stepSize: 2,
+              backdropColor: 'transparent',
+              color: '#bdb6cc',
+              font: { size: 9 }
+            },
+            grid: { color: '#ece9f3' },
+            angleLines: { color: '#ece9f3' },
+            pointLabels: {
+              color: '#5c5570',
+              font: { size: 11, family: "'Inter', sans-serif", weight: '600' }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function updateChart(){
+    if (!chart) return;
+    chart.data.labels = categories.map(c => c.name || ' ');
+    chart.data.datasets[0].data = categories.map(c => c.value);
+    chart.data.datasets[0].pointBackgroundColor = categories.map((c,i) => colorFor(i));
+    chart.update();
+  }
+
+  function renderRows(){
+    const rowsEl = document.getElementById('rows');
+    const emptyEl = document.getElementById('emptyState');
+    const chartWrap = document.getElementById('chartWrap');
+
+    rowsEl.innerHTML = '';
+
+    if (categories.length === 0) {
+      emptyEl.style.display = 'block';
+      chartWrap.style.display = 'none';
+      return;
+    } else {
+      emptyEl.style.display = 'none';
+      chartWrap.style.display = 'block';
+    }
+
+    categories.forEach((cat, index) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.dataset.id = cat.id;
+
+      const color = colorFor(index);
+
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.style.background = color;
+      dot.style.setProperty('--dot-ring', hexToRgba(color, 0.25));
+
+      const nameInput = document.createElement('input');
+      nameInput.className = 'name-input';
+      nameInput.type = 'text';
+      nameInput.value = cat.name;
+      nameInput.placeholder = 'Category name';
+      nameInput.maxLength = 28;
+      nameInput.addEventListener('input', () => {
+        cat.name = nameInput.value;
+        save();
+        updateChart();
+      });
+      nameInput.addEventListener('blur', () => {
+        if (!nameInput.value.trim()) {
+          nameInput.value = cat.name = 'Untitled';
+          save();
+          updateChart();
+        }
+      });
+      nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') nameInput.blur();
+      });
+
+      const numInput = document.createElement('input');
+      numInput.className = 'num-input';
+      numInput.type = 'number';
+      numInput.min = 0;
+      numInput.max = 10;
+      numInput.step = 1;
+      numInput.value = cat.value;
+      numInput.addEventListener('input', () => {
+        cat.value = clamp(numInput.value);
+        save();
+        updateChart();
+      });
+      numInput.addEventListener('blur', () => {
+        numInput.value = cat.value;
+      });
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'del-btn';
+      delBtn.innerHTML = '✕';
+      delBtn.title = 'Remove category';
+      delBtn.addEventListener('click', () => {
+        row.classList.add('removing');
+        setTimeout(() => {
+          categories = categories.filter(c => c.id !== cat.id);
+          save();
+          renderRows();
+          updateChart();
+        }, 220);
+      });
+
+      row.appendChild(dot);
+      row.appendChild(nameInput);
+      row.appendChild(numInput);
+      row.appendChild(delBtn);
+      rowsEl.appendChild(row);
+    });
+  }
+
+  function addCategory(){
+    categories.push({ id: uid(), name: 'New Category', value: 5 });
+    save();
+    renderRows();
+    updateChart();
+    const rows = document.querySelectorAll('.row');
+    const last = rows[rows.length - 1];
+    if (last) {
+      const input = last.querySelector('.name-input');
+      if (input) { input.focus(); input.select(); }
+    }
+  }
+
+  function resetToDefaults(){
+    categories = DEFAULTS.map(d => ({ id: uid(), name: d.name, value: d.value }));
+    save();
+    renderRows();
+    updateChart();
+  }
+
+  document.getElementById('addBtn').addEventListener('click', addCategory);
+  document.getElementById('resetBtn').addEventListener('click', resetToDefaults);
+
+  load();
+  buildChart();
+  renderRows();
+})();
+</script>
+
+</body>
+</html>
