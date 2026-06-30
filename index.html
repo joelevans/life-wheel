@@ -33,21 +33,24 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: var(--ink);
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
-    padding: 24px 14px;
+    padding: 16px;
     min-height: 100vh;
   }
 
   .card {
     width: 100%;
-    max-width: 640px;
+    max-width: 760px;
+    height: 460px;
     background: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    padding: 28px 28px 24px;
+    padding: 24px 26px 18px;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .card::before {
@@ -65,9 +68,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
     position: relative;
     z-index: 1;
+    flex-shrink: 0;
   }
 
   h1 {
@@ -81,7 +85,35 @@
   .subtitle {
     font-size: 13px;
     color: var(--ink-soft);
-    margin: 2px 0 18px;
+    margin: 2px 0 10px;
+    flex-shrink: 0;
+  }
+
+  .main {
+    flex: 1;
+    display: flex;
+    gap: 22px;
+    min-height: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .chart-panel {
+    flex: 0 0 44%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .list-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--line);
+    padding-left: 20px;
+    min-height: 0;
   }
 
   .reset-btn {
@@ -106,35 +138,46 @@
   .chart-wrap {
     position: relative;
     width: 100%;
-    max-width: 380px;
-    margin: 4px auto 10px;
+    max-width: 280px;
+    margin: 0 auto;
     aspect-ratio: 1 / 1;
   }
 
   .empty-state {
     text-align: center;
-    padding: 50px 20px 40px;
+    padding: 30px 16px;
     color: var(--ink-soft);
+    margin: auto;
   }
-  .empty-state .emoji { font-size: 34px; margin-bottom: 10px; }
-  .empty-state p { margin: 0 0 16px; font-size: 14px; }
+  .empty-state .emoji { font-size: 30px; margin-bottom: 8px; }
+  .empty-state p { margin: 0 0 14px; font-size: 13px; }
 
   .rows {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 8px;
-    position: relative;
-    z-index: 1;
+    gap: 5px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-right: 4px;
+    margin-right: -4px;
   }
+
+  .rows::-webkit-scrollbar { width: 6px; }
+  .rows::-webkit-scrollbar-track { background: transparent; }
+  .rows::-webkit-scrollbar-thumb {
+    background: #e4dff2;
+    border-radius: 10px;
+  }
+  .rows::-webkit-scrollbar-thumb:hover { background: #d8cdf5; }
 
   .row {
     display: grid;
-    grid-template-columns: 12px 1fr 64px 30px;
+    grid-template-columns: 10px 1fr 56px 26px;
     align-items: center;
-    gap: 12px;
-    padding: 9px 10px;
-    border-radius: 13px;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 12px;
     transition: background 0.18s ease, transform 0.18s ease, opacity 0.25s ease, max-height 0.25s ease;
     animation: rowIn 0.28s ease;
   }
@@ -182,15 +225,15 @@
   }
 
   .num-input {
-    width: 64px;
+    width: 56px;
     border: 1.5px solid var(--line);
     background: var(--bg-soft);
-    border-radius: 10px;
+    border-radius: 9px;
     text-align: center;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--ink);
-    padding: 7px 4px;
+    padding: 6px 4px;
     font-family: inherit;
     transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     -moz-appearance: textfield;
@@ -227,9 +270,10 @@
   }
 
   .add-row {
-    margin-top: 12px;
+    margin-top: 8px;
     display: flex;
     justify-content: center;
+    flex-shrink: 0;
   }
 
   .add-btn {
@@ -237,9 +281,9 @@
     background: #faf8ff;
     color: var(--accent-strong);
     font-weight: 600;
-    font-size: 13.5px;
-    padding: 10px 18px;
-    border-radius: 14px;
+    font-size: 12.5px;
+    padding: 8px 16px;
+    border-radius: 12px;
     cursor: pointer;
     width: 100%;
     transition: all 0.18s ease;
@@ -254,14 +298,19 @@
 
   .footer-note {
     text-align: center;
-    font-size: 11px;
+    font-size: 10.5px;
     color: #bdb6cc;
-    margin-top: 16px;
+    margin-top: 10px;
+    flex-shrink: 0;
   }
 
-  @media (max-width: 420px) {
-    .card { padding: 20px 16px 18px; border-radius: 18px; }
-    .row { grid-template-columns: 10px 1fr 56px 26px; gap: 8px; padding: 8px; }
+  @media (max-width: 560px) {
+    .card { height: 86vh; max-height: 640px; padding: 20px 18px 16px; border-radius: 18px; }
+    .main { flex-direction: column; gap: 10px; }
+    .chart-panel { flex: 0 0 auto; padding-bottom: 6px; }
+    .chart-wrap { max-width: 200px; }
+    .list-panel { border-left: none; border-top: 1px solid var(--line); padding-left: 0; padding-top: 12px; }
+    .row { grid-template-columns: 10px 1fr 52px 24px; gap: 8px; padding: 7px; }
     .name-input { font-size: 13.5px; }
   }
 </style>
@@ -277,22 +326,25 @@
   </header>
   <p class="subtitle">Rate each area of your life from 0–10</p>
 
-  <div class="chart-wrap" id="chartWrap">
-    <canvas id="wheelChart"></canvas>
+  <div class="main">
+    <div class="chart-panel">
+      <div class="chart-wrap" id="chartWrap">
+        <canvas id="wheelChart"></canvas>
+      </div>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="emoji">🌱</div>
+        <p>No categories yet.<br>Add one to begin reflecting.</p>
+      </div>
+    </div>
+
+    <div class="list-panel">
+      <div class="rows" id="rows"></div>
+      <div class="add-row">
+        <button class="add-btn" id="addBtn">+ Add category</button>
+      </div>
+      <div class="footer-note">Saved automatically to this browser</div>
+    </div>
   </div>
-
-  <div id="emptyState" class="empty-state" style="display:none;">
-    <div class="emoji">🌱</div>
-    <p>No categories yet. Add one to begin reflecting.</p>
-  </div>
-
-  <div class="rows" id="rows"></div>
-
-  <div class="add-row">
-    <button class="add-btn" id="addBtn">+ Add category</button>
-  </div>
-
-  <div class="footer-note">Saved automatically to this browser</div>
 </div>
 
 <script>
