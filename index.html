@@ -4,13 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Life Wheel</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
-  :root{
-    --radius: 22px;
+  :root {
     --card-bg: #ffffff;
     --bg-soft: #faf9fc;
     --ink: #2e2a3a;
@@ -18,214 +15,221 @@
     --line: #ece9f3;
     --accent: #b9a6f0;
     --accent-strong: #9b82e8;
-    --shadow: 0 20px 50px -20px rgba(80, 60, 130, 0.25), 0 4px 12px -4px rgba(80,60,130,0.12);
+    --r: 22px;
+    --shadow: 0 28px 64px -18px rgba(80,60,130,0.20), 0 4px 18px -4px rgba(80,60,130,0.09);
   }
 
-  * { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
-    margin: 0;
-    padding: 0;
+    height: 100%;
     background: transparent;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--ink);
   }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: var(--ink);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
-    min-height: 100vh;
+    padding: 14px;
+    min-height: 100%;
   }
 
+  /* ─── Card ─── */
   .card {
-    width: 100%;
-    max-width: 760px;
-    height: 460px;
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 24px 26px 18px;
     position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: min(520px, 92vh);
+    background: var(--card-bg);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
     overflow: hidden;
+  }
+
+  /* Ambient blush */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -90px; right: -90px;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(185,166,240,0.12) 0%, transparent 68%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── Views ─── */
+  .view {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
+    transition: transform 0.38s cubic-bezier(0.4,0,0.2,1),
+                opacity   0.32s ease;
+    will-change: transform, opacity;
   }
 
-  .card::before {
-    content: "";
-    position: absolute;
-    top: -120px;
-    right: -120px;
-    width: 280px;
-    height: 280px;
-    background: radial-gradient(circle, rgba(185,166,240,0.18), rgba(185,166,240,0) 70%);
-    pointer-events: none;
-  }
+  /* Chart: visible by default */
+  .v-chart { transform: translateX(0);    opacity: 1; z-index: 1; }
+  /* Edit: hidden to the right */
+  .v-edit  { transform: translateX(100%); opacity: 0; z-index: 1; }
 
-  header {
+  /* Toggled */
+  .card.editing .v-chart { transform: translateX(-30%); opacity: 0; pointer-events: none; }
+  .card.editing .v-edit  { transform: translateX(0);    opacity: 1; }
+
+  /* ─── Chart View ─── */
+  .cv-top {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 2px;
+    padding: 18px 20px 8px;
     position: relative;
-    z-index: 1;
-    flex-shrink: 0;
+    z-index: 2;
   }
 
-  h1 {
+  .cv-top h1 {
     font-family: 'Poppins', sans-serif;
-    font-size: 19px;
+    font-size: 16px;
     font-weight: 600;
-    margin: 0;
-    letter-spacing: -0.2px;
-  }
-
-  .subtitle {
-    font-size: 13px;
-    color: var(--ink-soft);
-    margin: 2px 0 10px;
-    flex-shrink: 0;
-  }
-
-  .main {
-    flex: 1;
-    display: flex;
-    gap: 22px;
-    min-height: 0;
-    position: relative;
-    z-index: 1;
-  }
-
-  .chart-panel {
-    flex: 0 0 44%;
+    letter-spacing: -0.1px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    min-width: 0;
+    gap: 7px;
   }
 
-  .list-panel {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    border-left: 1px solid var(--line);
-    padding-left: 20px;
-    min-height: 0;
-  }
-
-  .reset-btn {
+  .icon-btn {
     border: none;
     background: var(--bg-soft);
     color: var(--ink-soft);
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 8px 13px;
-    border-radius: 100px;
+    width: 36px; height: 36px;
+    border-radius: 11px;
     cursor: pointer;
-    transition: all 0.18s ease;
-    white-space: nowrap;
-  }
-  .reset-btn:hover {
-    background: #f1ecfc;
-    color: var(--accent-strong);
-    transform: translateY(-1px);
-  }
-  .reset-btn:active { transform: translateY(0); }
-
-  .chart-wrap {
-    position: relative;
-    width: 100%;
-    max-width: 280px;
-    margin: 0 auto;
-    aspect-ratio: 1 / 1;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 30px 16px;
-    color: var(--ink-soft);
-    margin: auto;
-  }
-  .empty-state .emoji { font-size: 30px; margin-bottom: 8px; }
-  .empty-state p { margin: 0 0 14px; font-size: 13px; }
-
-  .rows {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
-    overflow-y: auto;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background 0.16s, color 0.16s, transform 0.14s;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover  { background: #f0ebfc; color: var(--accent-strong); transform: scale(1.06); }
+  .icon-btn:active { transform: scale(0.94); }
+
+  .cv-canvas {
     flex: 1;
     min-height: 0;
-    padding-right: 4px;
-    margin-right: -4px;
+    position: relative;
+    padding: 4px 10px 14px;
   }
 
-  .rows::-webkit-scrollbar { width: 6px; }
-  .rows::-webkit-scrollbar-track { background: transparent; }
-  .rows::-webkit-scrollbar-thumb {
-    background: #e4dff2;
-    border-radius: 10px;
+  .cv-canvas canvas { width: 100% !important; height: 100% !important; }
+
+  .empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    text-align: center;
+    line-height: 1.65;
+    pointer-events: none;
   }
-  .rows::-webkit-scrollbar-thumb:hover { background: #d8cdf5; }
+  .empty-state .big { font-size: 34px; }
+
+  /* ─── Edit View ─── */
+  .ev-top {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    z-index: 2;
+  }
+
+  .ev-top-left h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 15.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ev-top-left p {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+
+  /* ─── Rows ─── */
+  .rows {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 14px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .rows::-webkit-scrollbar { width: 4px; }
+  .rows::-webkit-scrollbar-track { background: transparent; }
+  .rows::-webkit-scrollbar-thumb { background: #e0d8f4; border-radius: 10px; }
 
   .row {
     display: grid;
-    grid-template-columns: 10px 1fr 56px 26px;
+    grid-template-columns: 10px 1fr 58px 26px;
     align-items: center;
-    gap: 8px;
-    padding: 7px 8px;
+    gap: 10px;
+    padding: 8px 8px;
     border-radius: 12px;
-    transition: background 0.18s ease, transform 0.18s ease, opacity 0.25s ease, max-height 0.25s ease;
-    animation: rowIn 0.28s ease;
+    transition: background 0.14s ease;
+    animation: fadeUp 0.22s ease both;
   }
   .row:hover { background: var(--bg-soft); }
 
-  @keyframes rowIn {
-    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(-5px) scale(0.984); }
+    to   { opacity:1; transform:none; }
   }
-  .row.removing {
-    opacity: 0;
-    transform: translateX(12px) scale(0.96);
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin: 0;
-    overflow: hidden;
+
+  .row.out {
+    opacity: 0 !important;
+    transform: translateX(10px) scale(0.97) !important;
+    transition: opacity 0.17s ease, transform 0.17s ease !important;
   }
 
   .dot {
-    width: 12px;
-    height: 12px;
+    width: 10px; height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 0 4px var(--dot-ring, transparent);
   }
 
-  .name-input {
+  .name-inp {
     border: none;
     background: transparent;
-    font-size: 14.5px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--ink);
-    padding: 6px 8px;
+    padding: 5px 7px;
     border-radius: 8px;
     width: 100%;
+    min-width: 0;
     font-family: inherit;
-    transition: background 0.15s ease, box-shadow 0.15s ease;
+    transition: background 0.13s, box-shadow 0.13s;
   }
-  .name-input:hover { background: #f4f2fa; }
-  .name-input:focus {
-    outline: none;
-    background: #fff;
-    box-shadow: 0 0 0 2px var(--accent);
-  }
+  .name-inp:hover  { background: #f2eefa; }
+  .name-inp:focus  { outline:none; background:#fff; box-shadow: 0 0 0 2px var(--accent); }
 
-  .num-input {
-    width: 56px;
+  .num-inp {
+    width: 58px;
     border: 1.5px solid var(--line);
     background: var(--bg-soft);
     border-radius: 9px;
@@ -235,346 +239,344 @@
     color: var(--ink);
     padding: 6px 4px;
     font-family: inherit;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     -moz-appearance: textfield;
+    transition: border-color 0.13s, box-shadow 0.13s, background 0.13s;
   }
-  .num-input::-webkit-outer-spin-button,
-  .num-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  .num-input:focus {
-    outline: none;
-    border-color: var(--accent);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(185,166,240,0.25);
-  }
+  .num-inp::-webkit-outer-spin-button,
+  .num-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num-inp:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(185,166,240,0.2); background:#fff; }
 
   .del-btn {
-    border: none;
-    background: transparent;
+    border:none; background:transparent;
     color: var(--ink-soft);
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
+    width:26px; height:26px;
+    border-radius:7px; cursor:pointer;
+    font-size:13px;
+    display:flex; align-items:center; justify-content:center;
+    transition: all 0.13s;
   }
-  .del-btn:hover {
-    background: #fdeaea;
-    color: #d97a7a;
-  }
+  .del-btn:hover { background:#fdeaea; color:#d07070; }
 
-  .add-row {
-    margin-top: 8px;
-    display: flex;
-    justify-content: center;
+  /* ─── Edit footer ─── */
+  .ev-ft {
     flex-shrink: 0;
+    padding: 8px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
   }
 
   .add-btn {
+    width: 100%;
     border: 1.5px dashed #d8cdf5;
     background: #faf8ff;
     color: var(--accent-strong);
     font-weight: 600;
     font-size: 12.5px;
-    padding: 8px 16px;
+    padding: 10px;
     border-radius: 12px;
     cursor: pointer;
-    width: 100%;
-    transition: all 0.18s ease;
     font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, transform 0.13s;
   }
-  .add-btn:hover {
-    background: #f1ecfc;
-    border-color: var(--accent);
-    transform: translateY(-1px);
-  }
-  .add-btn:active { transform: translateY(0); }
+  .add-btn:hover  { background:#f1ecfc; border-color:var(--accent); transform:translateY(-1px); }
+  .add-btn:active { transform:none; }
 
-  .footer-note {
+  .reset-btn {
+    border: none;
+    background: transparent;
+    color: #c5bedd;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    align-self: center;
+    transition: color 0.13s, background 0.13s;
+  }
+  .reset-btn:hover { color:var(--ink-soft); background:var(--bg-soft); }
+
+  .ft-note {
     text-align: center;
-    font-size: 10.5px;
-    color: #bdb6cc;
-    margin-top: 10px;
-    flex-shrink: 0;
+    font-size: 10px;
+    color: #d0c8e4;
   }
 
-  @media (max-width: 560px) {
-    .card { height: 86vh; max-height: 640px; padding: 20px 18px 16px; border-radius: 18px; }
-    .main { flex-direction: column; gap: 10px; }
-    .chart-panel { flex: 0 0 auto; padding-bottom: 6px; }
-    .chart-wrap { max-width: 200px; }
-    .list-panel { border-left: none; border-top: 1px solid var(--line); padding-left: 0; padding-top: 12px; }
-    .row { grid-template-columns: 10px 1fr 52px 24px; gap: 8px; padding: 7px; }
-    .name-input { font-size: 13.5px; }
+  /* ─── Mobile ─── */
+  @media (max-width: 480px) {
+    body { padding: 10px; align-items: flex-start; }
+    .card { height: auto; min-height: min(480px, 88vh); border-radius: 18px; }
+    .cv-canvas { min-height: 300px; }
+    .row { grid-template-columns: 10px 1fr 52px 24px; gap: 8px; padding: 7px 6px; }
   }
 </style>
 </head>
 <body>
+<div class="card" id="card">
 
-<div class="card">
-  <header>
-    <div>
-      <h1>🌸 Life Wheel</h1>
+  <!-- ── CHART VIEW (default) ── -->
+  <div class="view v-chart">
+    <div class="cv-top">
+      <h1><span>🌱</span> Life Wheel</h1>
+      <button class="icon-btn" id="editBtn" title="Edit categories">✏️</button>
     </div>
-    <button class="reset-btn" id="resetBtn">Reset to defaults</button>
-  </header>
-  <p class="subtitle">Rate each area of your life from 0–10</p>
-
-  <div class="main">
-    <div class="chart-panel">
-      <div class="chart-wrap" id="chartWrap">
-        <canvas id="wheelChart"></canvas>
+    <div class="cv-canvas" id="cvCanvas">
+      <canvas id="wheelChart"></canvas>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <span class="big">🌱</span>
+        Tap ✏️ to add your first category
       </div>
-      <div id="emptyState" class="empty-state" style="display:none;">
-        <div class="emoji">🌱</div>
-        <p>No categories yet.<br>Add one to begin reflecting.</p>
-      </div>
-    </div>
-
-    <div class="list-panel">
-      <div class="rows" id="rows"></div>
-      <div class="add-row">
-        <button class="add-btn" id="addBtn">+ Add category</button>
-      </div>
-      <div class="footer-note">Saved automatically to this browser</div>
     </div>
   </div>
-</div>
 
+  <!-- ── EDIT VIEW ── -->
+  <div class="view v-edit">
+    <div class="ev-top">
+      <div class="ev-top-left">
+        <h2><span>🌱</span> Edit Wheel</h2>
+        <p>Tap a name to rename · change number to update score</p>
+      </div>
+      <button class="icon-btn" id="closeBtn" title="Back to chart">✕</button>
+    </div>
+    <div class="rows" id="rows"></div>
+    <div class="ev-ft">
+      <button class="add-btn"   id="addBtn">+ Add category</button>
+      <button class="reset-btn" id="resetBtn">Reset to defaults</button>
+      <div class="ft-note">Saved automatically to this browser</div>
+    </div>
+  </div>
+
+</div>
 <script>
-(function(){
+(function () {
+  /* ── Pastel palette ── */
   const PASTELS = [
-    '#A8D8EA', '#FFD3B0', '#C9E4C5', '#F6C9D6', '#D8C9F0',
-    '#FFE5A8', '#B8E0D2', '#F4C7C3', '#C3D9F0', '#E0C9E8'
+    '#A8D8EA','#FFD3B0','#C9E4C5','#F6C9D6','#D8C9F0',
+    '#FFE5A8','#B8E0D2','#F4C7C3','#C3D9F0','#E0C9E8',
   ];
 
   const DEFAULTS = [
-    { name: 'Health', value: 5 },
-    { name: 'Career', value: 5 },
-    { name: 'Relationships', value: 5 },
-    { name: 'Finances', value: 5 },
-    { name: 'Personal Growth', value: 5 },
-    { name: 'Fun & Recreation', value: 5 }
+    { name:'Health',           value:5 },
+    { name:'Career',           value:5 },
+    { name:'Relationships',    value:5 },
+    { name:'Finances',         value:5 },
+    { name:'Personal Growth',  value:5 },
+    { name:'Fun & Recreation', value:5 },
   ];
 
-  const STORAGE_KEY = 'lifeWheelState_v1';
-  let categories = [];
+  const STORE = 'lifeWheel_v4';
+
+  /* ── State ── */
+  let cats  = [];
   let chart = null;
-  let idCounter = 0;
+  let _id   = 0;
 
-  function uid(){ return 'c' + (idCounter++) + '_' + Math.random().toString(36).slice(2,7); }
+  const uid   = () => '_' + (_id++) + Math.random().toString(36).slice(2,5);
+  const clamp = v  => { v=Number(v); return isNaN(v)?0:Math.min(10,Math.max(0,v)); };
+  const col   = i  => PASTELS[i % PASTELS.length];
+  const rgba  = (h,a) => {
+    const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
 
-  function load(){
+  /* ── Dynamic per-edge padding so labels never clip ──
+     For each label at angular position θ (measured from top, clockwise):
+     - cos θ > 0  → label is on the right half  → needs right-edge clearance
+     - cos θ < 0  → label is on the left half   → needs left-edge clearance
+     - sin θ > 0  → label is on the bottom half → needs bottom clearance
+     - sin θ < 0  → label is on the top half    → needs top clearance          */
+  function labelPad() {
+    const n = cats.length;
+    if (!n) return { top:28, right:28, bottom:28, left:28 };
+
+    const CW   = 6.5;  // ~px per char at 11px Inter
+    const LH   = 18;   // label line-height px
+    const BASE = 20;   // minimum per-edge padding
+
+    let T=BASE, R=BASE, B=BASE, L=BASE;
+
+    cats.forEach((cat, i) => {
+      const θ   = (2*Math.PI*i/n) - Math.PI/2;
+      const cos = Math.cos(θ), sin = Math.sin(θ);
+      const hw  = Math.max(16, (cat.name||'x').length * CW / 2);
+
+      R = Math.max(R, BASE + hw*Math.max(0, cos)  + LH*0.5*Math.abs(sin)*0.35);
+      L = Math.max(L, BASE + hw*Math.max(0,-cos)  + LH*0.5*Math.abs(sin)*0.35);
+      B = Math.max(B, BASE + LH*Math.max(0, sin)  + hw*Math.abs(cos)*0.22);
+      T = Math.max(T, BASE + LH*Math.max(0,-sin)  + hw*Math.abs(cos)*0.22);
+    });
+
+    return {
+      top:    Math.ceil(T)+6,
+      right:  Math.ceil(R)+6,
+      bottom: Math.ceil(B)+6,
+      left:   Math.ceil(L)+6,
+    };
+  }
+
+  /* ── Chart ── */
+  function buildChart() {
+    const ctx = document.getElementById('wheelChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'radar',
+      data: buildData(),
+      options: buildOpts(),
+    });
+  }
+
+  function buildData() {
+    return {
+      labels: cats.map(c => c.name || ' '),
+      datasets: [{
+        data: cats.map(c => c.value),
+        backgroundColor: rgba('#C9C2EE', 0.24),
+        borderColor: '#B6A6E8',
+        borderWidth: 2.5,
+        pointBackgroundColor: cats.map((_,i) => col(i)),
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2.5,
+        pointRadius: 5.5,
+        pointHoverRadius: 7.5,
+        fill: true,
+      }],
+    };
+  }
+
+  function buildOpts() {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration:400, easing:'easeOutQuart' },
+      layout: { padding: labelPad() },
+      plugins: { legend:{ display:false }, tooltip:{ enabled:true } },
+      scales: {
+        r: {
+          min:0, max:10,
+          ticks: {
+            stepSize:2,
+            backdropColor:'transparent',
+            color:'#c5bedd',
+            font:{ size:8 },
+          },
+          grid:        { color:'#ece9f3' },
+          angleLines:  { color:'#ece9f3' },
+          pointLabels: {
+            color:'#5c5570',
+            font:{ size:11, family:"'Inter',sans-serif", weight:'600' },
+          },
+        },
+      },
+    };
+  }
+
+  function refreshChart() {
+    if (!chart) return;
+    chart.options.layout.padding = labelPad();
+    chart.data.labels = cats.map(c => c.name || ' ');
+    chart.data.datasets[0].data = cats.map(c => c.value);
+    chart.data.datasets[0].pointBackgroundColor = cats.map((_,i) => col(i));
+    chart.update();
+
+    const empty  = document.getElementById('emptyState');
+    const canvas = document.getElementById('wheelChart');
+    empty.style.display  = cats.length ? 'none'  : 'flex';
+    canvas.style.display = cats.length ? 'block' : 'none';
+  }
+
+  /* ── Rows ── */
+  function renderRows() {
+    const el = document.getElementById('rows');
+    el.innerHTML = '';
+
+    cats.forEach((cat, idx) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.style.background = col(idx);
+
+      const name = document.createElement('input');
+      name.className = 'name-inp';
+      name.type = 'text';
+      name.value = cat.name;
+      name.placeholder = 'Category name';
+      name.maxLength = 30;
+      name.addEventListener('input', () => { cat.name=name.value; save(); refreshChart(); });
+      name.addEventListener('blur',  () => {
+        if (!name.value.trim()) { name.value=cat.name='Untitled'; save(); refreshChart(); }
+      });
+      name.addEventListener('keydown', e => { if(e.key==='Enter') name.blur(); });
+
+      const num = document.createElement('input');
+      num.className = 'num-inp';
+      num.type='number'; num.min=0; num.max=10; num.step=1; num.value=cat.value;
+      num.addEventListener('input', () => { cat.value=clamp(num.value); save(); refreshChart(); });
+      num.addEventListener('blur',  () => { num.value=cat.value; });
+
+      const del = document.createElement('button');
+      del.className = 'del-btn';
+      del.innerHTML = '✕';
+      del.title = 'Remove';
+      del.addEventListener('click', () => {
+        row.classList.add('out');
+        setTimeout(() => { cats=cats.filter(c=>c!==cat); save(); renderRows(); refreshChart(); }, 175);
+      });
+
+      row.append(dot, name, num, del);
+      el.appendChild(row);
+    });
+  }
+
+  /* ── Persistence ── */
+  const save = () => { try { localStorage.setItem(STORE, JSON.stringify(cats)); } catch(e){} };
+
+  function load() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORE);
       if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length >= 0) {
-          categories = parsed.map(c => ({ id: c.id || uid(), name: c.name, value: clamp(c.value) }));
+        const p = JSON.parse(raw);
+        if (Array.isArray(p)) {
+          cats = p.map(c=>({ id:c.id||uid(), name:String(c.name||''), value:clamp(c.value) }));
           return;
         }
       }
     } catch(e) {}
-    categories = DEFAULTS.map(d => ({ id: uid(), name: d.name, value: d.value }));
+    cats = DEFAULTS.map(d=>({ id:uid(), name:d.name, value:d.value }));
   }
 
-  function save(){
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(categories)); } catch(e) {}
-  }
-
-  function clamp(v){
-    v = Number(v);
-    if (isNaN(v)) v = 0;
-    return Math.min(10, Math.max(0, v));
-  }
-
-  function colorFor(index){ return PASTELS[index % PASTELS.length]; }
-
-  function hexToRgba(hex, alpha){
-    const r = parseInt(hex.slice(1,3),16);
-    const g = parseInt(hex.slice(3,5),16);
-    const b = parseInt(hex.slice(5,7),16);
-    return `rgba(${r},${g},${b},${alpha})`;
-  }
-
-  function buildChart(){
-    const ctx = document.getElementById('wheelChart').getContext('2d');
-    chart = new Chart(ctx, {
-      type: 'radar',
-      data: {
-        labels: categories.map(c => c.name || ' '),
-        datasets: [{
-          data: categories.map(c => c.value),
-          backgroundColor: hexToRgba('#C9C2EE', 0.35),
-          borderColor: '#B6A6E8',
-          borderWidth: 2.5,
-          pointBackgroundColor: categories.map((c,i) => colorFor(i)),
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          fill: true,
-          tension: 0.15
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        animation: { duration: 450, easing: 'easeOutQuart' },
-        plugins: { legend: { display: false }, tooltip: { enabled: true } },
-        scales: {
-          r: {
-            min: 0,
-            max: 10,
-            ticks: {
-              display: true,
-              stepSize: 2,
-              backdropColor: 'transparent',
-              color: '#bdb6cc',
-              font: { size: 9 }
-            },
-            grid: { color: '#ece9f3' },
-            angleLines: { color: '#ece9f3' },
-            pointLabels: {
-              color: '#5c5570',
-              font: { size: 11, family: "'Inter', sans-serif", weight: '600' }
-            }
-          }
-        }
-      }
-    });
-  }
-
-  function updateChart(){
-    if (!chart) return;
-    chart.data.labels = categories.map(c => c.name || ' ');
-    chart.data.datasets[0].data = categories.map(c => c.value);
-    chart.data.datasets[0].pointBackgroundColor = categories.map((c,i) => colorFor(i));
-    chart.update();
-  }
-
-  function renderRows(){
-    const rowsEl = document.getElementById('rows');
-    const emptyEl = document.getElementById('emptyState');
-    const chartWrap = document.getElementById('chartWrap');
-
-    rowsEl.innerHTML = '';
-
-    if (categories.length === 0) {
-      emptyEl.style.display = 'block';
-      chartWrap.style.display = 'none';
-      return;
-    } else {
-      emptyEl.style.display = 'none';
-      chartWrap.style.display = 'block';
-    }
-
-    categories.forEach((cat, index) => {
-      const row = document.createElement('div');
-      row.className = 'row';
-      row.dataset.id = cat.id;
-
-      const color = colorFor(index);
-
-      const dot = document.createElement('div');
-      dot.className = 'dot';
-      dot.style.background = color;
-      dot.style.setProperty('--dot-ring', hexToRgba(color, 0.25));
-
-      const nameInput = document.createElement('input');
-      nameInput.className = 'name-input';
-      nameInput.type = 'text';
-      nameInput.value = cat.name;
-      nameInput.placeholder = 'Category name';
-      nameInput.maxLength = 28;
-      nameInput.addEventListener('input', () => {
-        cat.name = nameInput.value;
-        save();
-        updateChart();
-      });
-      nameInput.addEventListener('blur', () => {
-        if (!nameInput.value.trim()) {
-          nameInput.value = cat.name = 'Untitled';
-          save();
-          updateChart();
-        }
-      });
-      nameInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') nameInput.blur();
-      });
-
-      const numInput = document.createElement('input');
-      numInput.className = 'num-input';
-      numInput.type = 'number';
-      numInput.min = 0;
-      numInput.max = 10;
-      numInput.step = 1;
-      numInput.value = cat.value;
-      numInput.addEventListener('input', () => {
-        cat.value = clamp(numInput.value);
-        save();
-        updateChart();
-      });
-      numInput.addEventListener('blur', () => {
-        numInput.value = cat.value;
-      });
-
-      const delBtn = document.createElement('button');
-      delBtn.className = 'del-btn';
-      delBtn.innerHTML = '✕';
-      delBtn.title = 'Remove category';
-      delBtn.addEventListener('click', () => {
-        row.classList.add('removing');
-        setTimeout(() => {
-          categories = categories.filter(c => c.id !== cat.id);
-          save();
-          renderRows();
-          updateChart();
-        }, 220);
-      });
-
-      row.appendChild(dot);
-      row.appendChild(nameInput);
-      row.appendChild(numInput);
-      row.appendChild(delBtn);
-      rowsEl.appendChild(row);
-    });
-  }
-
-  function addCategory(){
-    categories.push({ id: uid(), name: 'New Category', value: 5 });
-    save();
-    renderRows();
-    updateChart();
-    const rows = document.querySelectorAll('.row');
-    const last = rows[rows.length - 1];
+  /* ── Actions ── */
+  function addCat() {
+    cats.push({ id:uid(), name:'New Category', value:5 });
+    save(); renderRows(); refreshChart();
+    const all = document.querySelectorAll('#rows .row');
+    const last = all[all.length-1];
     if (last) {
-      const input = last.querySelector('.name-input');
-      if (input) { input.focus(); input.select(); }
+      last.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      const inp = last.querySelector('.name-inp');
+      setTimeout(() => { if(inp){ inp.focus(); inp.select(); } }, 60);
     }
   }
 
-  function resetToDefaults(){
-    categories = DEFAULTS.map(d => ({ id: uid(), name: d.name, value: d.value }));
-    save();
-    renderRows();
-    updateChart();
+  function reset() {
+    cats = DEFAULTS.map(d=>({ id:uid(), name:d.name, value:d.value }));
+    save(); renderRows(); refreshChart();
   }
 
-  document.getElementById('addBtn').addEventListener('click', addCategory);
-  document.getElementById('resetBtn').addEventListener('click', resetToDefaults);
+  /* ── View toggle ── */
+  const card = document.getElementById('card');
+  document.getElementById('editBtn').addEventListener('click',  () => card.classList.add('editing'));
+  document.getElementById('closeBtn').addEventListener('click', () => card.classList.remove('editing'));
+  document.getElementById('addBtn').addEventListener('click', addCat);
+  document.getElementById('resetBtn').addEventListener('click', reset);
 
+  /* ── Boot ── */
   load();
   buildChart();
   renderRows();
+  refreshChart();
 })();
 </script>
-
 </body>
 </html>
